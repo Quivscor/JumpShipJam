@@ -1,0 +1,82 @@
+[gd_scene load_steps=6 format=3 uid="uid://ds0thw7h8w5mu"]
+
+[ext_resource type="Script" path="res://scripts/SceneManager.gd" id="1_orklu"]
+[ext_resource type="PackedScene" uid="uid://dru1jfx5amx4j" path="res://objects/character.tscn" id="1_tgrpe"]
+
+[sub_resource type="Environment" id="Environment_rmqot"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_d50i8"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_o7wiv"]
+
+[node name="Node3D" type="Node3D"]
+script = ExtResource("1_orklu")
+Player = ExtResource("1_tgrpe")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_rmqot")
+
+[node name="SpotLight3D" type="SpotLight3D" parent="."]
+transform = Transform3D(0.649967, 0.408202, 0.641026, -0.616606, 0.776321, 0.13085, -0.444229, -0.480309, 0.756283, 13.1693, 13.263, 4.93221)
+spot_range = 33.5974
+
+[node name="Terrain" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+axis_lock_linear_x = true
+axis_lock_linear_y = true
+axis_lock_linear_z = true
+axis_lock_angular_x = true
+axis_lock_angular_y = true
+axis_lock_angular_z = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Terrain"]
+transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, 0, -25, 0)
+shape = SubResource("BoxShape3D_d50i8")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Terrain/CollisionShape3D"]
+mesh = SubResource("BoxMesh_o7wiv")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="Terrain"]
+transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, 50, -25, 0)
+shape = SubResource("BoxShape3D_d50i8")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Terrain/CollisionShape3D2"]
+mesh = SubResource("BoxMesh_o7wiv")
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="Terrain"]
+transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, 0, -25, -50)
+shape = SubResource("BoxShape3D_d50i8")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Terrain/CollisionShape3D3"]
+mesh = SubResource("BoxMesh_o7wiv")
+
+[node name="CollisionShape3D4" type="CollisionShape3D" parent="Terrain"]
+transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, -50, -25, 0)
+shape = SubResource("BoxShape3D_d50i8")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Terrain/CollisionShape3D4"]
+mesh = SubResource("BoxMesh_o7wiv")
+
+[node name="CollisionShape3D5" type="CollisionShape3D" parent="Terrain"]
+transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, 0, -25, 50)
+shape = SubResource("BoxShape3D_d50i8")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Terrain/CollisionShape3D5"]
+mesh = SubResource("BoxMesh_o7wiv")
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("res://objects/character.tscn")
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="0" type="Node3D" parent="SpawnPoints" groups=["PlayerSpawnPoint"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
+
+[node name="1" type="Node3D" parent="SpawnPoints" groups=["PlayerSpawnPoint"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
+
+[node name="2" type="Node3D" parent="SpawnPoints" groups=["PlayerSpawnPoint"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
+
+[node name="3" type="Node3D" parent="SpawnPoints" groups=["PlayerSpawnPoint"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
