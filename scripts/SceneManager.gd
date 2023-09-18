@@ -4,7 +4,7 @@ extends Node3D
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	var index = 0
+	var index = 1
 	for i in GameManager.Players:
 		var currentPlayer : Node = Player.instantiate()
 		currentPlayer.name = str(GameManager.Players[i].id)

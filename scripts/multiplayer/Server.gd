@@ -1,5 +1,4 @@
 extends Node
-
 enum Message{
 	id,
 	join,
@@ -9,25 +8,27 @@ enum Message{
 	candidate,
 	offer,
 	answer,
-	checkIn,
+	removeLobby,
+	checkIn
 }
-
-var peer : WebSocketMultiplayerPeer = WebSocketMultiplayerPeer.new()
+var peer = WebSocketMultiplayerPeer.new()
 var users = {}
 var lobbies = {}
+
+var Characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 @export var hostPort = 8915
-
-
+# Called when the node enters the scene tree for the first time.
 func _ready():
 	if "--server" in OS.get_cmdline_args():
-		print("Hosting on " + str(hostPort))
+		print("hosting on " + str(hostPort))
 		peer.create_server(hostPort)
-	
+		
 	peer.connect("peer_connected", peer_connected)
 	peer.connect("peer_disconnected", peer_disconnected)
-	pass
+	pass # Replace with function body.
 
 
+# Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	peer.poll()
 	if peer.get_available_packet_count() > 0:
@@ -38,83 +39,98 @@ func _process(delta):
 			print(data)
 			
 			if data.message == Message.lobby:
-				join_lobby(data.id, data.lobbyID)
+				JoinLobby(data)
 				
 			if data.message == Message.offer || data.message == Message.answer || data.message == Message.candidate:
-				print("Source ID is: " + str(data.orgPeer))
-				send_to_player(data.peer, data)
-
+				print("source id is " + str(data.orgPeer))
+				sendToPlayer(data.peer, data)
+				
+			if data.message == Message.removeLobby:
+				if lobbies.has(data.lobbyID):
+					lobbies.erase(data.lobbyID)
+	pass
 
 func peer_connected(id):
-	print("Peer connected: " + str(id))
-	users[id] ={
+	print("Peer Connected: " + str(id))
+	users[id] = {
 		"id" : id,
 		"message" : Message.id
 	}
 	peer.get_peer(id).put_packet(JSON.stringify(users[id]).to_utf8_buffer())
 	pass
-
-
+	
 func peer_disconnected(id):
+	users.erase(id)
 	pass
 
 
-func join_lobby(userID, lobbyID):
-	if lobbyID == "":
-		lobbyID = generate_random_string()
-		lobbies[lobbyID] = Lobby.new(userID)
-		
-	var player = lobbies[lobbyID].add_player(userID, "")
+func JoinLobby(user):
+	var result = ""
+	if user.lobbyValue == "":
+		user.lobbyValue = generateRandomString()
+		lobbies[user.lobbyValue] = Lobby.new(user.id)
+		print(user.lobbyValue)
+	var player = lobbies[user.lobbyValue].add_player(user.id, user.name)
 	
-	for p in lobbies[lobbyID].Players:
+	for p in lobbies[user.lobbyValue].Players:
+		
 		var data = {
 			"message" : Message.userConnected,
-			"id" : userID,
+			"id" : user.id
 		}
-		send_to_player(p, data)
+		sendToPlayer(p, data)
 		
 		var data2 = {
 			"message" : Message.userConnected,
-			"id" : p,
+			"id" : p
 		}
-		send_to_player(userID, data2)
+		sendToPlayer(user.id, data2)
 		
 		var lobbyInfo = {
 			"message" : Message.lobby,
-			"players" : JSON.stringify(lobbies[lobbyID].Players),
-			"host" : lobbies[lobbyID].HostID,
-			"lobbyID" : lobbyID,
+			"players" : JSON.stringify(lobbies[user.lobbyValue].Players),
+			"host" : lobbies[user.lobbyValue].HostID,
+			"lobbyValue" : user.lobbyValue
 		}
-		send_to_player(p, lobbyInfo)
+		sendToPlayer(p, lobbyInfo)
+		
+		
 	
 	var data = {
 		"message" : Message.userConnected,
-		"id" : userID,
-		"host" : lobbies[lobbyID].HostID,
-		"name" : "",
-		"player" : lobbies[lobbyID].Players[userID],
-		"lobby" : lobbyID,
+		"id" : user.id,
+		"host" : lobbies[user.lobbyValue].HostID,
+		"player" : lobbies[user.lobbyValue].Players[user.id],
+		"lobbyValue" : user.lobbyValue
 	}
-	send_to_player(userID, data)
-
-
-var Characters = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"
-func generate_random_string():
+	
+	sendToPlayer(user.id, data)
+	
+	
+	
+func sendToPlayer(userId, data):
+	peer.get_peer(userId).put_packet(JSON.stringify(data).to_utf8_buffer())
+	
+func generateRandomString():
 	var result = ""
 	for i in range(32):
-		var randomIndex = randi() % Characters.length()
-		result += Characters[randomIndex]
+		var index = randi() % Characters.length()
+		result += Characters[index]
 	return result
 
-
-func send_to_player(userID, data):
-	peer.get_peer(userID).put_packet(JSON.stringify(data).to_utf8_buffer())
-
-
-func start_server():
+func startServer():
 	peer.create_server(hostPort)
-	print("Started server")
-
+	print("Started Server")
 
 func _on_start_server_pressed():
-	start_server()
+	startServer()
+	pass # Replace with function body.
+
+
+func _on_button_2_button_down():
+	var message = {
+		"message" : Message.id,
+		"data" : "test"
+	}
+	peer.put_packet(JSON.stringify(message).to_utf8_buffer())
+	pass # Replace with function body.

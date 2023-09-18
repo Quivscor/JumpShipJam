@@ -1,7 +1,5 @@
-[gd_scene load_steps=5 format=3 uid="uid://81fgd2m6s10f"]
+[gd_scene load_steps=3 format=3 uid="uid://81fgd2m6s10f"]
 
-[ext_resource type="Script" path="res://scripts/MultiplayerTest.gd" id="1_vyuvl"]
-[ext_resource type="PackedScene" uid="uid://dru1jfx5amx4j" path="res://objects/character.tscn" id="2_0muou"]
 [ext_resource type="Script" path="res://scripts/multiplayer/Client.gd" id="3_tisnb"]
 [ext_resource type="Script" path="res://scripts/multiplayer/Server.gd" id="4_7dlwi"]
 
@@ -10,8 +8,6 @@ layout_mode = 3
 anchors_preset = 0
 offset_right = 1151.0
 offset_bottom = 647.0
-script = ExtResource("1_vyuvl")
-playerObject = ExtResource("2_0muou")
 
 [node name="StartServer" type="Button" parent="."]
 layout_mode = 0
@@ -38,6 +34,14 @@ offset_bottom = 119.0
 text = "Join Lobby
 "
 
+[node name="StartGame" type="Button" parent="."]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 126.0
+offset_right = 171.0
+offset_bottom = 175.0
+text = "Start Game!!!"
+
 [node name="Client" type="Node" parent="."]
 script = ExtResource("3_tisnb")
 
@@ -55,3 +59,4 @@ script = ExtResource("4_7dlwi")
 [connection signal="pressed" from="StartServer" to="Server" method="_on_start_server_pressed"]
 [connection signal="pressed" from="StartClient" to="Client" method="_on_start_client_pressed"]
 [connection signal="pressed" from="JoinLobby" to="Client" method="_on_join_lobby_pressed"]
+[connection signal="pressed" from="StartGame" to="Client" method="_on_button_pressed"]

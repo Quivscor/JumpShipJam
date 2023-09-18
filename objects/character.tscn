@@ -44,6 +44,8 @@ properties/1/watch = false
 script = ExtResource("1_xk2ed")
 speed = 200.0
 
+[node name="Health" type="Node" parent="."]
+
 [node name="Attacks" type="Node" parent="."]
 
 [node name="Effects" type="Node" parent="."]
@@ -78,4 +80,6 @@ mesh = SubResource("SphereMesh_karr2")
 surface_material_override/0 = SubResource("StandardMaterial3D_p3tqn")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.04
+delta_interval = 0.04
 replication_config = SubResource("SceneReplicationConfig_ip08m")

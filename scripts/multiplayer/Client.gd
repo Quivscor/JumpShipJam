@@ -10,42 +10,35 @@ enum Message{
 	offer,
 	answer,
 	checkIn,
+	serverLobbyInfo,
+	removeLobby 
 }
 
-var peer : WebSocketMultiplayerPeer = WebSocketMultiplayerPeer.new()
+var peer = WebSocketMultiplayerPeer.new()
 var id = 0
-var rtcPeer : WebRTCMultiplayerPeer = WebRTCMultiplayerPeer.new() 
-var hostID : int
-var lobbyID = ""
+var rtcPeer : WebRTCMultiplayerPeer = WebRTCMultiplayerPeer.new()
+var hostId :int
+var lobbyValue = ""
+var lobbyInfo = {}
 
-
+# Called when the node enters the scene tree for the first time.
 func _ready():
-	multiplayer.connected_to_server.connect(rtc_server_connected)
-	multiplayer.peer_connected.connect(rtc_peer_connected)
-	multiplayer.peer_disconnected.connect(rtc_peer_disconnected)
-	pass
+	multiplayer.connected_to_server.connect(RTCServerConnected)
+	multiplayer.peer_connected.connect(RTCPeerConnected)
+	multiplayer.peer_disconnected.connect(RTCPeerDisconnected)
+	pass # Replace with function body.
 
-
-func rtc_server_connected():
+func RTCServerConnected():
 	print("RTC server connected")
-	pass
 
-
-func rtc_peer_connected(id):
-	print("RTC peer connected " + str(id))
-	pass
-
-
-func rtc_peer_disconnected(id):
-	print("RTC peer disconnected " + str(id))
-	pass
+func RTCPeerConnected(id):
+	print("rtc peer connected " + str(id))
 	
-	
-func connect_to_server(ip):
-	peer.create_client("ws://127.0.0.1:8915")
-	print("Started client")
+func RTCPeerDisconnected(id):
+	print("rtc peer disconnected " + str(id))
 
 
+# Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	peer.poll()
 	if peer.get_available_packet_count() > 0:
@@ -57,107 +50,135 @@ func _process(delta):
 			
 			if data.message == Message.id:
 				id = data.id
+				
 				connected(id)
 				
 			if data.message == Message.userConnected:
-				create_peer(data.id)
+				#GameManager.Players[data.id] = data.player
+				createPeer(data.id)
 				
 			if data.message == Message.lobby:
 				GameManager.Players = JSON.parse_string(data.players)
-				hostID = data.host
-				lobbyID = data.lobbyID
+				hostId = data.host
+				lobbyValue = data.lobbyValue
 				
 			if data.message == Message.candidate:
 				if rtcPeer.has_peer(data.orgPeer):
-					print("Got candidate: " + str(data.orgPeer) + "; My ID is " + str(id))
+					print("Got Candididate: " + str(data.orgPeer) + " my id is " + str(id))
 					rtcPeer.get_peer(data.orgPeer).connection.add_ice_candidate(data.mid, data.index, data.sdp)
 			
 			if data.message == Message.offer:
 				if rtcPeer.has_peer(data.orgPeer):
-						rtcPeer.get_peer(data.orgPeer).connection.set_remote_description("offer", data.data)
+					rtcPeer.get_peer(data.orgPeer).connection.set_remote_description("offer", data.data)
 			
 			if data.message == Message.answer:
 				if rtcPeer.has_peer(data.orgPeer):
-						rtcPeer.get_peer(data.orgPeer).connection.set_remote_description("answer", data.data)
-
+					rtcPeer.get_peer(data.orgPeer).connection.set_remote_description("answer", data.data)
+#			if data.message == Message.serverLobbyInfo:
+#
+#				$LobbyBrowser.InstanceLobbyInfo(data.name,data.userCount)
+	pass
 
 func connected(id):
 	rtcPeer.create_mesh(id)
 	multiplayer.multiplayer_peer = rtcPeer
 
-
-#webrtc connection stuff
-func create_peer(id):
+#web rtc connection
+func createPeer(id):
 	if id != self.id:
-		var peer : WebRTCPeerConnection = WebRTCLibPeerConnection.new()
+		var peer : WebRTCPeerConnection = WebRTCPeerConnection.new()
 		peer.initialize({
-			"iceServers" : [{"urls": ["stun:stun.l.google.com:19302"]}]
+			"iceServers" : [{ "urls": ["stun:stun.l.google.com:19302"] }]
 		})
-		print("Binding id: " + str(id) + "; My id is " + str(self.id))
+		print("binding id " + str(id) + "my id is " + str(self.id))
 		
-		peer.session_description_created.connect(self.offer_created.bind(id))
-		peer.ice_candidate_created.connect(self.ice_candidate_created.bind(id))
+		peer.session_description_created.connect(self.offerCreated.bind(id))
+		peer.ice_candidate_created.connect(self.iceCandidateCreated.bind(id))
 		rtcPeer.add_peer(peer, id)
 		
-		if !hostID == self.id:
+		if !hostId == self.id:
 			peer.create_offer()
-	pass
+		pass
+		
 
-
-func offer_created(type, data, id):
+func offerCreated(type, data, id):
 	if !rtcPeer.has_peer(id):
 		return
+		
 	rtcPeer.get_peer(id).connection.set_local_description(type, data)
+	
 	if type == "offer":
-		send_offer(id, data)
+		sendOffer(id, data)
 	else:
-		send_answer(id, data)
+		sendAnswer(id, data)
 	pass
-
-
-func send_offer(id, data):
-	var message ={
+	
+	
+func sendOffer(id, data):
+	var message = {
 		"peer" : id,
 		"orgPeer" : self.id,
 		"message" : Message.offer,
-		"data" : data,
-		"lobby" : lobbyID,
+		"data": data,
+		"Lobby": lobbyValue
 	}
 	peer.put_packet(JSON.stringify(message).to_utf8_buffer())
+	pass
 
-
-func send_answer(id, data):
-	var message ={
+func sendAnswer(id, data):
+	var message = {
 		"peer" : id,
 		"orgPeer" : self.id,
 		"message" : Message.answer,
-		"data" : data,
-		"lobby" : lobbyID,
+		"data": data,
+		"Lobby": lobbyValue
 	}
 	peer.put_packet(JSON.stringify(message).to_utf8_buffer())
-	
+	pass
 
-func ice_candidate_created(midName, indexName, sdpName, id):
-	var message ={
+func iceCandidateCreated(midName, indexName, sdpName, id):
+	var message = {
 		"peer" : id,
 		"orgPeer" : self.id,
 		"message" : Message.candidate,
-		"mid" : midName,
+		"mid": midName,
 		"index": indexName,
 		"sdp": sdpName,
-		"lobby" : lobbyID,
+		"Lobby": lobbyValue
 	}
+	peer.put_packet(JSON.stringify(message).to_utf8_buffer())
 	pass
+
+func connectToServer(ip):
+	peer.create_client("ws://159.65.122.216:8915")
+	print("started client")
 
 
 func _on_start_client_pressed():
-	connect_to_server("")
+	connectToServer("")
+	pass # Replace with function body.
 
+
+func _on_button_pressed():
+	StartGame.rpc()
+	pass # Replace with function body.
+
+@rpc("any_peer", "call_local")
+func StartGame():
+	var message = {
+		"message": Message.removeLobby,
+		"lobbyID" : lobbyValue
+	}
+	peer.put_packet(JSON.stringify(message).to_utf8_buffer())
+	var scene = load("res://scenes/main.tscn").instantiate()
+	get_tree().root.add_child(scene)
 
 func _on_join_lobby_pressed():
 	var message ={
 		"id" : id,
 		"message" : Message.lobby,
-		"lobbyID" : $lobbyName.text
+		"name" : "",
+		"lobbyValue" : $lobbyName.text
 	}
 	peer.put_packet(JSON.stringify(message).to_utf8_buffer())
+	pass # Replace with function body.
